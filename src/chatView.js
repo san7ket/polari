@@ -15,6 +15,7 @@ const PasteManager = imports.pasteManager;
 const Signals = imports.signals;
 const Utils = imports.utils;
 const UserList = imports.userList;
+const ChatroomManager = imports.chatroomManager;
 
 const MAX_NICK_CHARS = 8;
 const IGNORE_STATUS_TIME = 5;
@@ -288,6 +289,7 @@ const ChatView = new Lang.Class({
         this._pending = {};
         this._pendingLogs = [];
         this._statusCount = { left: 0, joined: 0, total: 0 };
+        this._chatroomManager = ChatroomManager.getDefault();
 
         this._room.account.connect('notify::nickname', Lang.bind(this,
             function() {
@@ -791,6 +793,23 @@ const ChatView = new Lang.Class({
         if (nickTag._popover.fallbackNick == contact.alias)
             nickTag._popover.user = contact;
 
+        if (this._chatroomManager.isUserWatched(contact.alias, this._room.account.get_display_name())) {
+            this._chatroomManager.popUserFromWatchlist(contact.alias, this._room.account.get_display_name());
+
+            let notification = new Gio.Notification();
+            notification.set_title("User is online");
+            notification.set_body("User " + contact.alias + " logged in.");
+
+            let param = GLib.Variant.new('(ssu)',
+                                         [ this._room.account.get_object_path(),
+                                           this._room.channel_name,
+                                           Utils.getTpEventTime() ]);
+            notification.set_default_action_and_target('app.join-room', param);
+            //this._app.send_notification('watched-user-notification', notification);
+
+            this._chatroomManager.emitWatchedUserNotification(notification);
+        }
+
         this._updateTagStatus(nickTag);
     },
 
@@ -804,12 +823,12 @@ const ChatView = new Lang.Class({
         if (indexToDelete > -1) {
             nickTag._contacts.splice(indexToDelete, 1);
 
-        if (nickTag._popover.fallbackNick == contact.alias) {
-            if (nickTag._contacts[0])
-                nickTag._popover.user = nickTag._contacts[0];
-            else
-                nickTag._popober.user = null;
-        }
+            if (nickTag._popover.fallbackNick == contact.alias) {
+                if (nickTag._contacts[0])
+                    nickTag._popover.user = nickTag._contacts[0];
+                else
+                    nickTag._popover.user = null;
+            }
 
             this._updateTagStatus(nickTag);
         }
@@ -1283,7 +1302,7 @@ const ChatView = new Lang.Class({
 
     _createNickTag: function(name) {
         let tag = new ButtonTag({ name: name });
-        tag._popover = new UserList.UserPopover({ relative_to: this._view, margin: 0 });
+        tag._popover = new UserList.UserPopover({ relative_to: this._view, margin: 0, room: this._room });
         tag.connect('clicked', Lang.bind(this, this._onNickTagClicked));
         return tag;
     },
