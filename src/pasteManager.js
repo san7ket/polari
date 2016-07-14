@@ -37,7 +37,7 @@ const PasteManager = new Lang.Class({
 
     pasteContent: function(content, title, callback) {
         if (typeof content == 'string') {
-            Utils.gpaste(content, title, callback);
+            Utils.gpost("", content, callback);
         } else if (content instanceof GdkPixbuf.Pixbuf) {
             Utils.imgurPaste(content, title, callback);
         } else if (content.query_info_async) {
@@ -69,7 +69,7 @@ const PasteManager = new Lang.Class({
             file.load_contents_async(null, Lang.bind(this,
                 function(f, res) {
                     let [, contents, ,] = f.load_contents_finish(res);
-                    Utils.gpaste(contents.toString(), title, callback);
+                    Utils.gpaste("", contents.toString(), callback);
                 }));
         else if (targetType == DndTargetType.IMAGE)
             file.read_async(GLib.PRIORITY_DEFAULT, null, Lang.bind(this,
