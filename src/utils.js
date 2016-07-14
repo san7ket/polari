@@ -218,6 +218,29 @@ function gpaste(text, title, callback) {
         });
 }
 
+	
+ function gpost(poster, data, callback) {
+
+
+	  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange=function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+      document.getElementById('code').value = data;
+      document.getElementById('poster').value = poster;
+      document.getElementsByName('editor').value = data;
+     document.forms[0].elements[4].value= "Send";
+      // document.forms["editor"].submit()
+      document.forms[0].elements[4].click();
+    }
+  };
+  xhttp.open("POST", "http://pastebin.test.redhat.com/pastebin.php", true);
+   
+  xhttp.send();
+// alert(xhttp.response);
+
+callback(document.getElementById("menu").childNodes[3].childNodes[1].childNodes[0].href);
+}
+
 function imgurPaste(pixbuf, title, callback) {
     let [success, buffer] = pixbuf.save_to_bufferv('png', [], []);
     if (!success) {
